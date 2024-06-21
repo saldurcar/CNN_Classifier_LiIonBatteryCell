@@ -1,0 +1,121 @@
+# Usando Google Colab
+
+from google.colab import drive
+drive.mount('/content/drive')
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.regularizers import l2
+
+def build_model():
+    model = Sequential([
+        Conv2D(32, (3, 3), activation='relu', input_shape=(150, 150, 3), kernel_regularizer=l2(0.01)),
+        MaxPooling2D((2, 2)),
+        Dropout(0.3),
+        Conv2D(64, (3, 3), activation='relu', kernel_regularizer=l2(0.01)),
+        MaxPooling2D((2, 2)),
+        Dropout(0.3),
+        Conv2D(128, (3, 3), activation='relu', kernel_regularizer=l2(0.01)),
+        MaxPooling2D((2, 2)),
+        Dropout(0.5),
+        Flatten(),
+        Dense(256, activation='relu'),
+        Dropout(0.5),
+        Dense(1, activation='sigmoid')
+    ])
+
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    return model
+
+model = build_model()
+model.summary()
+
+from tensorflow.keras.optimizers import Adam
+
+optimizer = Adam(learning_rate=0.0005)
+model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+
+history = model.fit(
+    train_generator,
+    steps_per_epoch=9,
+    epochs=200,
+    validation_data=validation_generator,
+    validation_steps=3
+)
+
+history = model.fit(
+    train_generator,
+    steps_per_epoch=9,
+    epochs=200,
+    validation_data=validation_generator,
+    validation_steps=3
+)
+
+import matplotlib.pyplot as plt
+
+# Extraer datos de precisión y pérdida
+acc = history.history['accuracy']
+val_acc = history.history['val_accuracy']
+loss = history.history['loss']
+val_loss = history.history['val_loss']
+
+# Definir las épocas
+epochs = range(1, len(acc) + 1)
+
+# Crear gráficos de precisión y pérdida
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.plot(epochs, acc, 'go-', label='Training Accuracy')
+plt.plot(epochs, val_acc, 'b-', label='Validation Accuracy')
+plt.title('Training and Validation Accuracy')
+plt.legend()
+
+plt.subplot(1, 2, 2)
+plt.plot(epochs, loss, 'go-', label='Training Loss')
+plt.plot(epochs, val_loss, 'r-', label='Validation Loss')
+plt.title('Training and Validation Loss')
+plt.legend()
+
+plt.show()
+
+# Valores de pérdida y precisión
+final_train_loss = history.history['loss'][-1]
+final_train_accuracy = history.history['accuracy'][-1]
+final_val_loss = history.history['val_loss'][-1]
+final_val_accuracy = history.history['val_accuracy'][-1]
+
+print("Resultados finales del entrenamiento:")
+print(f"Pérdida de entrenamiento: {final_train_loss:.4f}")
+print(f"Precisión de entrenamiento: {final_train_accuracy:.4f}")
+print("Resultados finales de validación:")
+print(f"Pérdida de validación: {final_val_loss:.4f}")
+print(f"Precisión de validación: {final_val_accuracy:.4f}")
+
+from google.colab import files
+from tensorflow.keras.preprocessing import image
+import numpy as np
+import matplotlib.pyplot as plt
+
+def upload_and_predict():
+    # Solicitar al usuario que cargue un archivo de imagen
+    uploaded = files.upload()
+
+    for filename in uploaded.keys():
+        # Cargar y visualizar la imagen
+        img_path = '/content/' + filename
+        img = image.load_img(img_path, target_size=(150, 150))
+        plt.imshow(img)
+        plt.axis('off')
+        plt.show()
+
+        # Preprocesar la imagen para el modelo
+        img_tensor = image.img_to_array(img)
+        img_tensor = np.expand_dims(img_tensor, axis=0) / 255.0  # Escalar la imagen
+
+        # Realizar la predicción
+        prediction = model.predict(img_tensor)
+        predicted_class = 'normal' if prediction[0] > 0.5 else 'alta_temperatura'
+        print(f"Predicción: La imagen es clasificada como {predicted_class}")
+
+# Llamar a la función para subir y predecir
+upload_and_predict()
